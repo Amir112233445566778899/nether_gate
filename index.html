@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#07050f">
+<meta name="description" content="Nether Gate — سرور ماینکرفت فایت با قوانین شفاف و اندفایت">
+<title>Nether Gate | ندرگیت</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07050f;--panel:#12101c;--panel2:#1a1628;--line:#322b4a;
+  --text:#f3eeff;--muted:#9b92b8;--accent:#b57cff;--lime:#e0c4ff;
+  --gold:#f0c14b;--red:#ff6b7a;--green:#5ddea0;
+  --font:'Vazirmatn',Tahoma,sans-serif;--tech:'Orbitron',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden;line-height:1.75}
+/* animated ambient bg */
+.bg-scene{position:fixed;inset:0;z-index:-5;overflow:hidden;pointer-events:none}
+.bg-layer{position:absolute;inset:0;opacity:0;transition:opacity 2s ease}
+.bg-layer.on{opacity:1}
+.bg-a{background:
+  radial-gradient(ellipse 90% 60% at 50% -5%,#4a208066,transparent 55%),
+  radial-gradient(ellipse 50% 40% at 95% 60%,#2a104844,transparent),
+  radial-gradient(ellipse 40% 35% at 5% 80%,#1a0a3044,transparent),
+  linear-gradient(180deg,#0a0614 0%,#0e0818 40%,#07050f 100%)}
+.bg-b{background:
+  radial-gradient(ellipse 70% 50% at 80% 10%,#5a182866,transparent 50%),
+  radial-gradient(ellipse 50% 40% at 10% 70%,#3a102844,transparent),
+  linear-gradient(180deg,#12080e 0%,#0c0610 50%,#07050f 100%)}
+.bg-c{background:
+  radial-gradient(ellipse 80% 55% at 30% 0%,#1a305066,transparent 50%),
+  radial-gradient(ellipse 45% 40% at 90% 80%,#0a203844,transparent),
+  linear-gradient(180deg,#060e16 0%,#080c14 50%,#05070e 100%)}
+.stars{position:absolute;inset:0}
+.stars span{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;opacity:.4;animation:twinkle 3s ease-in-out infinite alternate}
+@keyframes twinkle{to{opacity:1;transform:scale(1.4)}}
+.embers{position:absolute;inset:0;overflow:hidden}
+.embers i{position:absolute;bottom:-10px;width:3px;height:3px;border-radius:50%;background:#c9a0ff;box-shadow:0 0 10px 2px #b57cff88;animation:rise linear infinite;opacity:0}
+@keyframes rise{0%{transform:translateY(0) scale(.5);opacity:0}15%{opacity:.8}100%{transform:translateY(-110vh) translateX(30px) scale(1.2);opacity:0}}
+
+/* weather */
+.weather{position:fixed;inset:0;z-index:4;pointer-events:none;overflow:hidden;opacity:0;transition:opacity 2s}
+.weather.on{opacity:1}
+.weather.rain span{position:absolute;top:-30px;width:1.5px;height:16px;background:linear-gradient(to bottom,transparent,#a8d0ffcc);border-radius:2px;animation:rainFall linear infinite}
+@keyframes rainFall{to{transform:translateY(110vh) translateX(15px)}}
+.weather.snow span{position:absolute;top:-20px;width:5px;height:5px;background:#fff;border-radius:50%;opacity:.7;animation:snowFall linear infinite;box-shadow:0 0 4px #fff8}
+@keyframes snowFall{to{transform:translateY(110vh) translateX(var(--sx,20px)) rotate(360deg)}}
+
+/* ===== INTRO ===== */
+.intro{position:fixed;inset:0;z-index:1000;background:#040208;display:grid;place-items:center;overflow:hidden;transition:opacity 1s,visibility 1s}
+.intro.hide{opacity:0;visibility:hidden;pointer-events:none}
+.intro-stage{position:relative;width:min(700px,94vw);height:360px;display:grid;place-items:center}
+.gate-title{
+  font-family:var(--tech);font-weight:900;font-size:clamp(36px,9vw,68px);
+  letter-spacing:.18em;color:#f0e8ff;position:relative;z-index:3;
+  text-shadow:0 0 20px #b57cff88,0 0 60px #7b3cff44,0 0 100px #5a2db833;
+  animation:titleIdle 3s ease-in-out infinite;
+}
+@keyframes titleIdle{0%,100%{text-shadow:0 0 20px #b57cff88,0 0 60px #7b3cff44}50%{text-shadow:0 0 30px #d4b0ff,0 0 80px #b57cff66,0 0 120px #7b3cff33}}
+.gate-title.hit{animation:titleStrike .7s ease-out forwards}
+@keyframes titleStrike{
+  0%{filter:brightness(1);transform:scale(1)}
+  12%{filter:brightness(4) drop-shadow(0 0 40px #fff);transform:scale(1.06)}
+  30%{filter:brightness(2.5) drop-shadow(0 0 25px #e0c4ff);transform:scale(1.03)}
+  55%{filter:brightness(1.5);opacity:1}
+  100%{filter:brightness(1);opacity:0;transform:scale(.9) translateY(-16px)}
+}
+.steve-walk{
+  position:absolute;bottom:70px;left:-60px;z-index:5;
+  width:48px;height:72px;image-rendering:pixelated;
+  filter:drop-shadow(0 6px 10px #000c);opacity:0;
+}
+.steve-walk.run{opacity:1;animation:steveGo 2.6s linear forwards}
+@keyframes steveGo{0%{left:-60px}100%{left:calc(100% + 30px)}}
+.lightning{position:absolute;inset:0;z-index:8;pointer-events:none;opacity:0}
+.lightning.strike{animation:bolt .6s ease-out forwards}
+.lightning svg{width:100%;height:100%}
+@keyframes bolt{0%{opacity:0}6%{opacity:1}14%{opacity:.2}22%{opacity:1}40%{opacity:.6}100%{opacity:0}}
+.flash{position:absolute;inset:-20%;background:radial-gradient(circle at 50% 40%,#fff 0%,#e0c4ff88 20%,transparent 60%);opacity:0;z-index:12;pointer-events:none}
+.flash.go{animation:scrFlash .55s ease-out forwards}
+@keyframes scrFlash{0%{opacity:0}8%{opacity:.9}25%{opacity:.35}100%{opacity:0}}
+.intro-sub{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);font-family:var(--tech);font-size:10px;letter-spacing:4px;color:#7a7199;opacity:0;transition:opacity .8s .2s}
+.intro-sub.show{opacity:1}
+.skip{position:absolute;bottom:24px;left:24px;z-index:20;background:none;border:0;color:#5a5280;font:12px var(--font);cursor:pointer}
+.skip:hover{color:#c9b8ff}
+.intro-glow{position:absolute;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,#b57cff22,transparent 70%);z-index:1;animation:glowPulse 4s ease-in-out infinite}
+@keyframes glowPulse{50%{transform:scale(1.15);opacity:.7}}
+
+/* ===== LOGIN ===== */
+.login-overlay{position:fixed;inset:0;z-index:900;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 40%,#160e28ee 0%,#05030af2 70%);transition:opacity .7s,visibility .7s;backdrop-filter:blur(8px)}
+.login-overlay.hide{opacity:0;visibility:hidden;pointer-events:none}
+.login-card{width:min(400px,92vw);border-radius:28px;padding:40px 30px 30px;position:relative;background:linear-gradient(165deg,#16122acc,#0c0a16ee);border:1px solid #3d3560;box-shadow:0 40px 100px #000c,0 0 80px #7b3cff15}
+.login-card::before{content:"";position:absolute;inset:-2px;border-radius:30px;z-index:-1;background:conic-gradient(from var(--spin,0deg),#ff2d6a,#ffbe0b,#00d4a0,#4d9fff,#b57cff,#ff2d6a);animation:spinRGB 4.5s linear infinite;opacity:.65}
+@property --spin{syntax:'<angle>';inherits:false;initial-value:0deg}
+@keyframes spinRGB{to{--spin:360deg}}
+.login-card::after{content:"";position:absolute;inset:2px;border-radius:26px;background:linear-gradient(165deg,#16122a,#0c0a16);z-index:-1}
+.login-logo{width:56px;height:56px;margin:0 auto 14px;border-radius:16px;background:linear-gradient(135deg,#c48bff,#5a2db8);display:grid;place-items:center;font-family:var(--tech);font-weight:900;font-size:20px;box-shadow:0 0 32px #b57cff55;animation:logoBob 3s ease-in-out infinite}
+@keyframes logoBob{50%{transform:translateY(-5px)}}
+.login-title{text-align:center;font-family:var(--tech);font-size:18px;letter-spacing:4px;font-weight:800;margin-bottom:4px}
+.login-note{text-align:center;font-size:11px;color:var(--gold);line-height:1.85;background:#f0c14b12;border:1px solid #f0c14b40;border-radius:12px;padding:10px 14px;margin:14px 0 18px}
+.login-tabs{display:flex;gap:8px;justify-content:center;margin-bottom:16px}
+.login-tabs button{font-family:var(--font);font-size:13px;font-weight:700;padding:8px 22px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;transition:.2s}
+.login-tabs button.active{background:#b57cff22;border-color:#b57cff;color:#f0e8ff}
+.login-form{display:flex;flex-direction:column;gap:10px}
+.login-form input{width:100%;padding:13px 16px;border-radius:14px;border:1px solid var(--line);background:#0a0814;color:var(--text);font:inherit;font-size:14px;outline:none;text-align:center;direction:ltr;transition:.2s}
+.login-form input:focus{border-color:var(--accent);box-shadow:0 0 0 3px #b57cff25}
+.btn-auth{margin-top:6px;padding:14px;border:0;border-radius:14px;background:linear-gradient(135deg,#d4b0ff,#7b3cff);color:#0a0612;font-weight:800;font-size:14px;cursor:pointer;font-family:var(--font);box-shadow:0 10px 30px #7b3cff44;transition:.25s}
+.btn-auth:hover{transform:translateY(-2px);box-shadow:0 14px 40px #7b3cff66}
+.login-err{text-align:center;font-size:12px;color:var(--red);min-height:18px;margin-top:6px}
+
+/* NAV */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:50;padding:14px 0;pointer-events:none}
+.nav{pointer-events:auto;width:min(1120px,calc(100% - 28px));margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:11px 18px;border-radius:20px;background:#0e0b16d0;backdrop-filter:blur(18px);border:1px solid #ffffff12;box-shadow:0 10px 40px #0007}
+.brand{display:flex;align-items:center;gap:11px;font-weight:900;font-size:15px;text-decoration:none;color:inherit}
+.brand-mark{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,#c48bff,#5a2db8);display:grid;place-items:center;font-family:var(--tech);font-weight:900;font-size:14px;box-shadow:0 0 18px #b57cff44}
+.nav-links{display:flex;gap:24px;font-size:13px;color:var(--muted)}
+.nav-links a{text-decoration:none;color:inherit;transition:.2s;font-weight:500}
+.nav-links a:hover{color:#f0e8ff}
+.nav-right{display:flex;align-items:center;gap:10px}
+.user-pill{display:none;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;background:#b57cff18;border:1px solid #b57cff40;font-size:12px;font-weight:700}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 18px;border-radius:13px;font-family:var(--font);font-weight:700;font-size:13px;cursor:pointer;border:1px solid #ffffff18;background:#ffffff08;color:var(--text);text-decoration:none;transition:.25s}
+.btn:hover{transform:translateY(-2px);border-color:#b57cff66;background:#b57cff15}
+.btn-primary{background:linear-gradient(135deg,#d4b0ff,#7b3cff);color:#0a0612;border:0;box-shadow:0 8px 26px #7b3cff40}
+.btn-primary:hover{box-shadow:0 12px 36px #7b3cff55}
+.btn-ghost{background:transparent}
+
+/* LAYOUT */
+.wrap{width:min(1120px,calc(100% - 36px));margin:0 auto}
+.hero{padding:150px 0 90px;display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:center;min-height:92vh}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:999px;font-size:12px;font-weight:700;color:var(--accent);background:#b57cff14;border:1px solid #b57cff38;margin-bottom:22px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 5px #b57cff22;animation:pulse 1.8s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 11px #b57cff00}}
+h1{font-size:clamp(38px,5.8vw,66px);font-weight:900;line-height:1.12;margin-bottom:18px;letter-spacing:-1px}
+h1 em{font-style:normal;color:var(--accent);text-shadow:0 0 40px #b57cff55}
+.lead{color:var(--muted);font-size:16px;line-height:2.1;max-width:520px;margin-bottom:30px}
+.hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:34px}
+.hero-meta{display:flex;gap:30px;flex-wrap:wrap}
+.hero-meta div strong{display:block;font-size:18px;color:#fff;font-weight:800}
+.hero-meta div span{font-size:12px;color:var(--muted)}
+
+.portal-visual{height:400px;position:relative;display:grid;place-items:center;perspective:1000px}
+.portal{width:250px;height:340px;border-radius:48% 48% 14px 14px;border:13px solid #2a1848;background:radial-gradient(ellipse at 50% 35%,#e0a0ff 0%,#9b4dff 18%,#5a2db8 40%,#2a1048 65%,#0a0612 100%);box-shadow:0 0 60px #b57cff66,0 0 120px #7b3cff40,inset 0 0 50px #e0b0ff55;transform:rotateY(-12deg);animation:portalFloat 6s ease-in-out infinite;position:relative}
+.portal::before{content:"";position:absolute;inset:14px;border:2px dashed #e8c8ff88;border-radius:48% 48% 10px 10px;animation:spin 28s linear infinite}
+.portal::after{content:"";position:absolute;inset:28px;background:repeating-linear-gradient(125deg,transparent 0 12px,#e0a0ff18 13px 15px);border-radius:48% 48% 8px 8px}
+.portal-icon{position:absolute;inset:0;display:grid;place-items:center;font-size:52px;filter:drop-shadow(0 0 24px #e8c8ff);animation:corePulse 2.4s ease-in-out infinite;z-index:2}
+@keyframes portalFloat{50%{transform:translateY(-14px) rotateY(10deg)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes corePulse{50%{transform:scale(1.12);filter:drop-shadow(0 0 36px #fff)}}
+.float-ore{position:absolute;width:44px;height:44px;border-radius:8px;border:2px solid #ffffff25;box-shadow:inset -6px -6px #0005,0 8px 16px #0006;animation:oreFloat 5s ease-in-out infinite;image-rendering:pixelated}
+.float-ore.o1{top:30px;right:10px;background:linear-gradient(135deg,#5ef0ff,#0a8a8a)}
+.float-ore.o2{bottom:50px;left:8px;background:linear-gradient(135deg,#ffe66d,#b8860b);animation-delay:-1.5s}
+.float-ore.o3{top:90px;left:20px;background:linear-gradient(135deg,#4dff9a,#0a7a40);animation-delay:-.8s}
+.float-ore.o4{bottom:30px;right:30px;background:linear-gradient(135deg,#ff4a4a,#8a0a0a);animation-delay:-2.2s}
+@keyframes oreFloat{50%{transform:translateY(-18px) rotate(18deg)}}
+
+.section{padding:90px 0}
+.section-head{text-align:center;max-width:640px;margin:0 auto 44px}
+.kicker{font-family:var(--tech);font-size:11px;letter-spacing:3px;color:var(--accent);font-weight:700;margin-bottom:10px}
+.section-head h2{font-size:clamp(26px,3.6vw,40px);font-weight:900;margin-bottom:12px}
+.section-head p{color:var(--muted);font-size:15px;line-height:2}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{background:linear-gradient(165deg,#17132a,#100e1a);border:1px solid var(--line);border-radius:22px;padding:26px;transition:.35s;position:relative;overflow:hidden}
+.card::after{content:"";position:absolute;width:100px;height:100px;border-radius:50%;background:#b57cff0a;top:-30px;left:-30px}
+.card:hover{border-color:#b57cff55;transform:translateY(-7px);box-shadow:0 24px 60px #0007}
+.card-icon{width:50px;height:50px;border-radius:14px;display:grid;place-items:center;font-size:22px;background:#b57cff15;border:1px solid #b57cff30;margin-bottom:16px}
+.card h3{font-size:17px;font-weight:800;margin-bottom:8px}
+.card p{font-size:13.5px;color:var(--muted);line-height:1.95}
+
+.plugins{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.plugin{text-align:center;padding:20px 12px;border-radius:18px;background:#12101c;border:1px solid var(--line);transition:.3s}
+.plugin:hover{border-color:#5ddea055;transform:translateY(-4px)}
+.plugin .ic{font-size:28px;margin-bottom:10px;display:block}
+.plugin h4{font-size:13px;font-weight:800;margin-bottom:4px}
+.plugin p{font-size:11.5px;color:var(--muted);line-height:1.75}
+
+.rules-list{max-width:820px;margin:0 auto;display:grid;gap:12px}
+.rule-item{display:grid;grid-template-columns:48px 1fr;gap:14px;align-items:start;padding:18px 20px;border-radius:16px;background:#12101c;border:1px solid var(--line);transition:.25s}
+.rule-item:hover{border-color:#b57cff44}
+.rule-num{width:42px;height:42px;border-radius:12px;background:#b57cff18;color:var(--accent);font-weight:900;display:grid;place-items:center;font-size:14px}
+.rule-item h3{font-size:15px;font-weight:800;margin-bottom:6px}
+.rule-item p{font-size:13px;color:var(--muted);line-height:1.95}
+.notice{max-width:720px;margin:32px auto 0;padding:22px 26px;border-radius:18px;background:#f0c14b10;border:1px solid #f0c14b40;text-align:center}
+.notice p{color:#e8d9a8;font-size:14px;line-height:2}
+
+.join-box{text-align:center;padding:52px 28px;border-radius:28px;background:radial-gradient(ellipse at 50% 0%,#b57cff1a,transparent 55%),#12101c;border:1px solid #b57cff40;box-shadow:0 28px 80px #0006}
+.join-box h2{font-size:28px;font-weight:900;margin:10px 0 12px}
+.join-box .lead{margin:0 auto 20px;max-width:480px}
+.addr{direction:ltr;display:inline-block;padding:13px 22px;border-radius:12px;border:1px dashed #b57cff66;background:#b57cff0c;font-family:var(--tech);font-size:15px;color:#d4b0ff;letter-spacing:1px;margin-bottom:16px}
+
+.faq{max-width:720px;margin:0 auto;display:grid;gap:10px}
+.faq details{padding:16px 20px;border-radius:14px;background:#12101c;border:1px solid var(--line);transition:.2s}
+.faq details[open]{border-color:#b57cff44}
+.faq summary{cursor:pointer;font-weight:700;font-size:14px}
+.faq p{margin-top:10px;font-size:13px;color:var(--muted);line-height:1.95}
+
+.footer{padding:36px 0;border-top:1px solid #ffffff10;color:#7a7199;font-size:12px}
+.footer-in{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;align-items:center}
+.reveal{opacity:0;transform:translateY(28px);transition:.75s cubic-bezier(.2,.8,.2,1)}
+.reveal.on{opacity:1;transform:none}
+.toast{position:fixed;bottom:28px;left:50%;transform:translate(-50%,20px);background:#e8deff;color:#0a0612;padding:12px 22px;border-radius:14px;font-size:13px;font-weight:800;opacity:0;transition:.3s;z-index:200;pointer-events:none;box-shadow:0 12px 32px #0006}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+.weather-ctrl{position:fixed;bottom:24px;right:24px;z-index:40;display:flex;gap:8px}
+.weather-ctrl button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:#12101ccc;backdrop-filter:blur(10px);color:var(--muted);font-size:16px;cursor:pointer;transition:.2s}
+.weather-ctrl button:hover,.weather-ctrl button.on{border-color:#b57cff;color:#f0e8ff;background:#b57cff22}
+
+@media(max-width:860px){
+  .hero{grid-template-columns:1fr;padding-top:120px;min-height:auto}
+  .portal-visual{height:300px;order:-1}
+  .portal{transform:scale(.82)}
+  .nav-links{display:none}
+  .grid-3,.plugins{grid-template-columns:1fr}
+  .hero-meta{justify-content:center}
+  .hero-copy{text-align:center}
+  .lead{margin-left:auto;margin-right:auto}
+  .hero-actions{justify-content:center}
+}
+</style>
+</head>
+<body>
+
+<!-- ambient background -->
+<div class="bg-scene" aria-hidden="true">
+  <div class="bg-layer bg-a on" id="bg0"></div>
+  <div class="bg-layer bg-b" id="bg1"></div>
+  <div class="bg-layer bg-c" id="bg2"></div>
+  <div class="stars" id="stars"></div>
+  <div class="embers" id="embers"></div>
+</div>
+<div class="weather" id="weather" aria-hidden="true"></div>
+
+<!-- INTRO -->
+<div class="intro" id="intro">
+  <button class="skip" id="skipIntro" type="button">رد کردن ←</button>
+  <div class="intro-stage">
+    <div class="intro-glow"></div>
+    <div class="gate-title" id="gateTitle">NETHER GATE</div>
+    <img class="steve-walk" id="steveWalk" alt="" width="48" height="72">
+    <div class="lightning" id="lightning">
+      <svg viewBox="0 0 400 360" preserveAspectRatio="none">
+        <polyline points="200,0 178,70 215,85 155,150 240,165 175,240 230,280 195,360" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 0 10px #fff) drop-shadow(0 0 24px #c9a0ff)"/>
+        <polyline points="200,0 220,60 185,95 235,145 170,210 210,300" fill="none" stroke="#f0e8ff" stroke-width="2.5" opacity=".75" style="filter:drop-shadow(0 0 8px #fff)"/>
+      </svg>
+    </div>
+    <div class="flash" id="flash"></div>
+  </div>
+  <div class="intro-sub" id="introSub">ENTER THE GATE</div>
+</div>
+
+<!-- LOGIN -->
+<div class="login-overlay hide" id="loginOverlay">
+  <div class="login-card">
+    <div class="login-logo">NG</div>
+    <div class="login-title">NETHER GATE</div>
+    <div class="login-note">نام کاربری باید دقیقاً همان نام اکانت ماینکرفت شما باشد</div>
+    <div class="login-tabs">
+      <button type="button" class="active" id="tabLogin">ورود</button>
+      <button type="button" id="tabReg">ثبت‌نام</button>
+    </div>
+    <form class="login-form" id="authForm">
+      <input type="text" id="authUser" placeholder="Username" maxlength="16" required autocomplete="username">
+      <input type="password" id="authPass" placeholder="Password" required autocomplete="current-password">
+      <input type="password" id="authPass2" placeholder="Confirm Password" style="display:none" autocomplete="new-password">
+      <button type="submit" class="btn-auth" id="authBtn">ورود</button>
+      <div class="login-err" id="authErr"></div>
+    </form>
+  </div>
+</div>
+
+<header class="topbar">
+  <nav class="nav">
+    <a class="brand" href="#top"><span class="brand-mark">NG</span> Nether Gate</a>
+    <div class="nav-links">
+      <a href="#about">درباره</a>
+      <a href="#plugins">پلاگین‌ها</a>
+      <a href="#rules">قوانین</a>
+      <a href="#join">ورود</a>
+      <a href="#faq">سوالات</a>
+    </div>
+    <div class="nav-right">
+      <div class="user-pill" id="userPill"><span id="userLabel">—</span></div>
+      <a class="btn btn-primary" href="#join">عضویت</a>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+  <section class="hero wrap">
+    <div class="hero-copy">
+      <div class="eyebrow"><span class="dot"></span> سرور فایت · عضوگیری باز</div>
+      <h1>دروازه به<br><em>نبرد واقعی</em></h1>
+      <p class="lead">ندرگیت یک سرور SMP فایت است. بساز، تیم بگیر، ترید کن و برای اندفایت آماده شو. قوانین شفاف و فضای رقابتی بدون حاشیه.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#join">شروع ماجراجویی</a>
+        <a class="btn" href="#rules">مشاهده قوانین</a>
+        <button class="btn btn-ghost" id="btnLogout" type="button" style="display:none">خروج</button>
+      </div>
+      <div class="hero-meta">
+        <div><strong>SMP</strong><span>سبک بازی</span></div>
+        <div><strong>۲ روز</strong><span>PvP اولیه خاموش</span></div>
+        <div><strong>فایت</strong><span>تمرکز سرور</span></div>
+      </div>
+    </div>
+    <div class="portal-visual" aria-hidden="true">
+      <span class="float-ore o1"></span>
+      <span class="float-ore o2"></span>
+      <span class="float-ore o3"></span>
+      <span class="float-ore o4"></span>
+      <div class="portal"><div class="portal-icon">⚔</div></div>
+    </div>
+  </section>
+
+  <section class="section" id="about">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <div class="kicker">ABOUT</div>
+        <h2>ندرگیت چیست؟</h2>
+        <p>سروری برای بازیکن‌هایی که فایت، استراتژی و آزادی عمل می‌خواهند.</p>
+      </div>
+      <div class="grid-3">
+        <article class="card reveal"><div class="card-icon">⚔</div><h3>طراحی‌شده برای فایت</h3><p>تمرکز روی مبارزه عادلانه. ترپ و دام ردستونی ممنوع است.</p></article>
+        <article class="card reveal"><div class="card-icon">🏛</div><h3>آزادی عمل</h3><p>گریف بیس، کشتن پلیر، تشکیل تیم و ترید — همه مجاز و به عهده خود بازیکن‌ها.</p></article>
+        <article class="card reveal"><div class="card-icon">🛡</div><h3>شروع امن کوتاه</h3><p>دو روز اول PvP خاموش است تا فرصت ساخت و آماده‌سازی داشته باشید.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="plugins">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <div class="kicker">PLUGINS</div>
+        <h2>پلاگین‌ها و امکانات</h2>
+        <p>ابزارهایی برای تجربه روان‌تر بقا و فایت.</p>
+      </div>
+      <div class="plugins">
+        <div class="plugin reveal"><span class="ic">🌳</span><h4>Timber</h4><p>با شیفت و قطع درخت، کل درخت می‌افتد</p></div>
+        <div class="plugin reveal"><span class="ic">📦</span><h4>Sort</h4><p>مرتب‌سازی سریع اینونتوری</p></div>
+        <div class="plugin reveal"><span class="ic">📍</span><h4>Homes</h4><p>ست‌کردن خانه و بازگشت</p></div>
+        <div class="plugin reveal"><span class="ic">💬</span><h4>Chat</h4><p>چت گروهی و پیام خصوصی</p></div>
+        <div class="plugin reveal"><span class="ic">🗺</span><h4>Map</h4><p>نقشه وب سرور</p></div>
+        <div class="plugin reveal"><span class="ic">🔒</span><h4>AntiCheat</h4><p>محافظت در برابر چیت مبارزه</p></div>
+        <div class="plugin reveal"><span class="ic">⏳</span><h4>Protection</h4><p>محافظت موقت دو روز اول</p></div>
+        <div class="plugin reveal"><span class="ic">✨</span><h4>Elytra</h4><p>کاستوم رسپی با ادمین</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="rules">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <div class="kicker">RULES</div>
+        <h2>قوانین سرور ندرگیت</h2>
+        <p>خواندن قوانین قبل از ورود الزامی است. نقض = بن.</p>
+      </div>
+      <div class="rules-list">
+        <div class="rule-item reveal"><div class="rule-num">۱</div><div><h3>دو روز اول — بدون کشتار</h3><p>تا دو روز اول که PvP خاموش است، حتی حق کشتن بازیکن‌ها را با وسایلی مثل TNT، Minecart، End Crystal و مشابه ندارید. در صورت استفاده بن می‌شوید.</p></div></div>
+        <div class="rule-item reveal"><div class="rule-num">۲</div><div><h3>اند و ندر</h3><p>اند سرور تا روز ۵ خاموش است. ندر سرور تا روز اول خاموش است.</p></div></div>
+        <div class="rule-item reveal"><div class="rule-num">۳</div><div><h3>ماد و ریسورس‌پک</h3><p>استفاده از برخی مادها یا ریسورس‌پک‌ها مثل X-Ray یا Minimap مجاز است. چیت‌هایی مثل Auto Clicker، Kill Aura، Reach و مشابه اکیداً ممنوع است و در صورت استفاده بن می‌شوید.</p></div></div>
+        <div class="rule-item reveal"><div class="rule-num">۴</div><div><h3>پوشن و تیر Slow Falling</h3><p>استفاده از پوشن یا تیر Slow Falling ممنوع است و در صورت استفاده بن می‌شوید.</p></div></div>
+        <div class="rule-item reveal"><div class="rule-num">۵</div><div><h3>ترپ ممنوع</h3><p>سرور برای فایت طراحی شده. استفاده از هرگونه ترپ ردستونی و غیرردستونی بن است و در صورت استفاده بن خواهید شد.</p></div></div>
+        <div class="rule-item reveal"><div class="rule-num">۶</div><div><h3>الیترا کاستوم</h3><p>برای جذاب‌تر شدن اندفایت می‌توانید با کاستوم رسپی مخصوص، الیترا بسازید. وسایل را به ادمین می‌دهید و الیترا تحویل می‌گیرید.</p></div></div>
+        <div class="rule-item reveal"><div class="rule-num">۷</div><div><h3>آزادی گریف، تیم و ترید</h3><p>حق گریف کردن بیس‌ها، کشتن پلیرها، تشکیل تیم یا ترید وسایل به عهده خود افراد است و کاملاً مجاز است.</p></div></div>
+      </div>
+      <div class="notice reveal">
+        <p>زمان ران شدن سرور، جزئیات کاستوم رسپی الیترا و اطلاعات تکمیلی تا هفته آینده اعلام می‌شود. عضوگیری از همین حالا شروع شده است.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="join">
+    <div class="wrap">
+      <div class="join-box reveal">
+        <div class="kicker">JOIN</div>
+        <h2>آماده‌ای وارد ندرگیت شوی؟</h2>
+        <p class="lead">آدرس و نسخه سرور از کانال رسمی و ادمین‌ها اعلام می‌شود. قبل از ورود قوانین را کامل بخوان.</p>
+        <div class="addr">آدرس از کانال رسمی</div><br>
+        <button class="btn btn-primary" type="button" id="copyAddr">کپی متن</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="faq">
+    <div class="wrap">
+      <div class="section-head reveal"><div class="kicker">FAQ</div><h2>سوالات پرتکرار</h2></div>
+      <div class="faq">
+        <details class="reveal"><summary>سرور چه زمانی باز می‌شود؟</summary><p>زمان دقیق ران و جزئیات تکمیلی تا هفته آینده اعلام می‌شود. عضوگیری از الان فعال است.</p></details>
+        <details class="reveal"><summary>PvP از کی فعال است؟</summary><p>دو روز اول PvP خاموش است. بعد از آن فایت آزاد است (طبق قوانین).</p></details>
+        <details class="reveal"><summary>آیا X-Ray مجاز است؟</summary><p>بله، برخی ریسورس‌پک‌ها مثل X-Ray و Minimap مجازند. چیت‌های مبارزه (Aura، Reach، AutoClicker و ...) ممنوع و بن‌آور هستند.</p></details>
+        <details class="reveal"><summary>چطور الیترا بگیرم؟</summary><p>با کاستوم رسپی: وسایل لازم را به ادمین می‌دهید و الیترا دریافت می‌کنید. جزئیات رسپی بعداً اعلام می‌شود.</p></details>
+        <details class="reveal"><summary>نام کاربری سایت چیست؟</summary><p>باید دقیقاً همان نام اکانت ماینکرفت شما باشد.</p></details>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-in">
+    <div class="brand"><span class="brand-mark">NG</span> Nether Gate</div>
+    <span>© ۲۰۲۶ ندرگیت · سرور فایت</span>
+    <span>قوانین را بخوان، بعد وارد شو.</span>
+  </div>
+</footer>
+
+<div class="weather-ctrl">
+  <button type="button" id="btnRain" title="باران">🌧</button>
+  <button type="button" id="btnSnow" title="برف">❄</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+var STEVE = "data:image/png;base64,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";
+document.getElementById('steveWalk').src = STEVE;
+
+/* stars + embers */
+(function(){
+  var stars = document.getElementById('stars');
+  for(var i=0;i<60;i++){
+    var s = document.createElement('span');
+    s.style.left = Math.random()*100+'%';
+    s.style.top = Math.random()*100+'%';
+    s.style.animationDelay = (Math.random()*3)+'s';
+    s.style.width = s.style.height = (1+Math.random()*2)+'px';
+    stars.appendChild(s);
+  }
+  var embers = document.getElementById('embers');
+  for(var j=0;j<12;j++){
+    var e = document.createElement('i');
+    e.style.left = Math.random()*100+'%';
+    e.style.animationDuration = (12+Math.random()*14)+'s';
+    e.style.animationDelay = (-Math.random()*15)+'s';
+    embers.appendChild(e);
+  }
+})();
+
+/* rotating bg */
+var bgI = 0;
+setInterval(function(){
+  document.getElementById('bg'+bgI).classList.remove('on');
+  bgI = (bgI+1)%3;
+  document.getElementById('bg'+bgI).classList.add('on');
+}, 10000);
+
+/* weather */
+var weather = document.getElementById('weather');
+var weatherMode = null;
+function clearWeather(){
+  weather.className = 'weather';
+  weather.innerHTML = '';
+  weatherMode = null;
+  document.getElementById('btnRain').classList.remove('on');
+  document.getElementById('btnSnow').classList.remove('on');
+}
+function startRain(){
+  clearWeather();
+  weatherMode = 'rain';
+  weather.className = 'weather rain on';
+  document.getElementById('btnRain').classList.add('on');
+  var n = window.innerWidth < 700 ? 45 : 80;
+  for(var i=0;i<n;i++){
+    var d = document.createElement('span');
+    d.style.left = Math.random()*100+'%';
+    d.style.animationDuration = (.5+Math.random()*.7)+'s';
+    d.style.animationDelay = (Math.random()*2)+'s';
+    d.style.opacity = .3+Math.random()*.5;
+    weather.appendChild(d);
+  }
+  toast('🌧 باران');
+  setTimeout(function(){ if(weatherMode==='rain') clearWeather(); }, 60000);
+}
+function startSnow(){
+  clearWeather();
+  weatherMode = 'snow';
+  weather.className = 'weather snow on';
+  document.getElementById('btnSnow').classList.add('on');
+  var n = window.innerWidth < 700 ? 35 : 55;
+  for(var i=0;i<n;i++){
+    var d = document.createElement('span');
+    d.style.left = Math.random()*100+'%';
+    d.style.animationDuration = (4+Math.random()*5)+'s';
+    d.style.animationDelay = (Math.random()*3)+'s';
+    d.style.setProperty('--sx', ((Math.random()-.5)*60)+'px');
+    d.style.width = d.style.height = (3+Math.random()*4)+'px';
+    weather.appendChild(d);
+  }
+  toast('❄ برف');
+  setTimeout(function(){ if(weatherMode==='snow') clearWeather(); }, 60000);
+}
+document.getElementById('btnRain').onclick = function(){ if(weatherMode==='rain') clearWeather(); else startRain(); };
+document.getElementById('btnSnow').onclick = function(){ if(weatherMode==='snow') clearWeather(); else startSnow(); };
+setTimeout(startRain, 28000);
+
+/* intro */
+var intro = document.getElementById('intro');
+var introDone = false;
+function endIntro(){
+  if(introDone) return;
+  introDone = true;
+  intro.classList.add('hide');
+  maybeShowLogin();
+}
+function runIntro(){
+  setTimeout(function(){ document.getElementById('steveWalk').classList.add('run'); }, 700);
+  setTimeout(function(){
+    document.getElementById('lightning').classList.add('strike');
+    document.getElementById('flash').classList.add('go');
+    document.getElementById('gateTitle').classList.add('hit');
+    document.getElementById('introSub').classList.add('show');
+  }, 2400);
+  setTimeout(endIntro, 3600);
+}
+document.getElementById('skipIntro').onclick = endIntro;
+
+/* auth */
+var AUTH_KEY='ng_session_v3', USERS_KEY='ng_users_v3', authMode='login';
+var loginOverlay = document.getElementById('loginOverlay');
+function getUsers(){ try{return JSON.parse(localStorage.getItem(USERS_KEY)||'{}');}catch(e){return{};} }
+function saveUsers(u){ localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
+function getSession(){ try{return JSON.parse(localStorage.getItem(AUTH_KEY)||'null');}catch(e){return null;} }
+function setSession(user){ localStorage.setItem(AUTH_KEY, JSON.stringify({user:user,ts:Date.now()})); }
+function clearSession(){ localStorage.removeItem(AUTH_KEY); }
+function enterApp(username){
+  loginOverlay.classList.add('hide');
+  document.getElementById('userPill').style.display='flex';
+  document.getElementById('userLabel').textContent=username;
+  document.getElementById('btnLogout').style.display='inline-flex';
+  toast('خوش آمدی '+username);
+}
+function maybeShowLogin(){
+  var s=getSession();
+  if(s&&s.user){ loginOverlay.classList.add('hide'); enterApp(s.user); }
+  else loginOverlay.classList.remove('hide');
+}
+document.getElementById('tabLogin').onclick=function(){
+  authMode='login'; document.getElementById('authPass2').style.display='none';
+  document.getElementById('authPass2').required=false; document.getElementById('authBtn').textContent='ورود';
+  this.classList.add('active'); document.getElementById('tabReg').classList.remove('active');
+  document.getElementById('authErr').textContent='';
+};
+document.getElementById('tabReg').onclick=function(){
+  authMode='register'; document.getElementById('authPass2').style.display='block';
+  document.getElementById('authPass2').required=true; document.getElementById('authBtn').textContent='ثبت‌نام';
+  this.classList.add('active'); document.getElementById('tabLogin').classList.remove('active');
+  document.getElementById('authErr').textContent='';
+};
+document.getElementById('authForm').onsubmit=function(e){
+  e.preventDefault();
+  var user=document.getElementById('authUser').value.trim();
+  var pass=document.getElementById('authPass').value;
+  var pass2=document.getElementById('authPass2').value;
+  var err=document.getElementById('authErr'); err.textContent='';
+  if(!/^[A-Za-z0-9_]{3,16}$/.test(user)){ err.textContent='نام کاربری ۳–۱۶ کاراکتر انگلیسی (مثل اکانت ماینکرفت)'; return; }
+  if(pass.length<4){ err.textContent='رمز حداقل ۴ کاراکتر'; return; }
+  var users=getUsers();
+  if(authMode==='register'){
+    if(pass!==pass2){ err.textContent='تکرار رمز اشتباه است'; return; }
+    if(users[user.toLowerCase()]){ err.textContent='این نام قبلاً ثبت شده'; return; }
+    users[user.toLowerCase()]={user:user,pass:pass}; saveUsers(users); setSession(user); enterApp(user);
+  } else {
+    var rec=users[user.toLowerCase()];
+    if(!rec||rec.pass!==pass){ err.textContent='نام کاربری یا رمز اشتباه'; return; }
+    setSession(rec.user); enterApp(rec.user);
+  }
+};
+document.getElementById('btnLogout').onclick=function(){ clearSession(); location.reload(); };
+
+function toast(msg){
+  var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2500);
+}
+document.getElementById('copyAddr').onclick=function(){
+  if(navigator.clipboard) navigator.clipboard.writeText('آدرس از کانال رسمی').then(function(){toast('کپی شد');});
+  else toast('کپی دستی کنید');
+};
+
+if('IntersectionObserver' in window){
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(en){ if(en.isIntersecting){ en.target.classList.add('on'); io.unobserve(en.target);} });
+  },{threshold:0.1});
+  document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+} else document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('on'); });
+
+window.addEventListener('load', function(){
+  if(sessionStorage.getItem('ng_intro_v3')){
+    intro.classList.add('hide'); introDone=true; maybeShowLogin();
+  } else {
+    runIntro(); sessionStorage.setItem('ng_intro_v3','1');
+  }
+});
+})();
+</script>
+</body>
+</html>
